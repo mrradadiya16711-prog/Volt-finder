@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOLT Finder — Order Direct, No Fees</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#1a1d24; --panel2:#22262f; --ink:#eef1f6; --mut:#9aa3b2;
+    --volt:#ffd60a; --volt2:#ffb300; --green:#34d399; --red:#ff5d5d; --line:#2c313c;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.5}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px 120px}
+  /* header */
+  header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 78%,transparent);
+    padding:14px 0 10px;margin-bottom:6px;backdrop-filter:blur(6px)}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--volt),var(--volt2));
+    display:flex;align-items:center;justify-content:center;font-weight:900;color:#1a1300;font-size:20px;
+    box-shadow:0 4px 18px rgba(255,179,0,.35)}
+  .brand h1{font-size:19px;margin:0;letter-spacing:-.3px}
+  .brand p{margin:0;font-size:12px;color:var(--mut)}
+  /* value banner */
+  .pitch{background:linear-gradient(135deg,#1f2937,#11161f);border:1px solid var(--line);
+    border-radius:var(--radius);padding:14px 16px;margin:14px 0 16px;display:flex;gap:12px;align-items:center}
+  .pitch .big{font-size:26px}
+  .pitch b{color:var(--volt)}
+  .pitch small{color:var(--mut);display:block;margin-top:2px}
+  /* controls */
+  .search{display:flex;gap:8px;margin-bottom:10px}
+  .search input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    border-radius:12px;padding:12px 14px;font-size:15px;outline:none}
+  .search input:focus{border-color:var(--volt)}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:0 0 8px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{white-space:nowrap;background:var(--panel);border:1px solid var(--line);color:var(--mut);
+    padding:8px 13px;border-radius:30px;font-size:13px;cursor:pointer}
+  .chip.active{background:var(--volt);border-color:var(--volt);color:#1a1300;font-weight:700}
+  .row-label{font-size:12px;color:var(--mut);margin:6px 2px}
+  /* card */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;margin-bottom:12px;position:relative}
+  .card-top{display:flex;gap:12px;align-items:flex-start}
+  .avatar{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:26px;flex-shrink:0}
+  .card h3{margin:0;font-size:16px}
+  .cuisine{font-size:12px;color:var(--mut)}
+  .meta{font-size:12px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px}
+  .meta .dot::before{content:"📍 ";filter:grayscale(.2)}
+  .rate{color:var(--volt);font-weight:700}
+  .deal{margin-top:10px;background:rgba(255,214,10,.08);border:1px dashed rgba(255,214,10,.35);
+    border-radius:10px;padding:8px 10px;font-size:13px;display:flex;gap:8px;align-items:center}
+  .deal::before{content:"⭐";font-size:13px}
+  .compare-row{display:flex;gap:8px;margin-top:12px}
+  .btn{flex:1;text-align:center;padding:11px;border-radius:11px;font-weight:700;font-size:14px;cursor:pointer;
+    border:none;text-decoration:none;display:block}
+  .btn-order{background:var(--green);color:#06231a}
+  .btn-compare{flex:0 0 46px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-size:18px}
+  .btn-compare.sel{background:var(--volt);border-color:var(--volt);color:#1a1300}
+  .price{font-size:12px;color:var(--mut);margin-top:8px}
+  .price span{color:var(--ink)}
+  /* compare bar */
+  .bar{position:fixed;left:0;right:0;bottom:0;background:#11151c;border-top:1px solid var(--line);
+    padding:12px 16px;transform:translateY(140%);transition:transform .25s;z-index:40}
+  .bar.show{transform:translateY(0)}
+  .bar-inner{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:center}
+  .bar .lbl{font-size:13px;color:var(--mut)}
+  .bar .count{font-weight:800;color:var(--volt)}
+  .bar .clear{margin-left:auto;background:transparent;border:none;color:var(--mut);font-size:13px;cursor:pointer}
+  .bar .go{background:var(--volt);color:#1a1300;border:none;padding:12px 20px;border-radius:11px;font-weight:800;cursor:pointer}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:60;padding:16px;overflow:auto}
+  .modal.show{display:block}
+  .sheet{max-width:720px;margin:20px auto;background:var(--panel);border:1px solid var(--line);
+    border-radius:18px;overflow:hidden}
+  .sheet h2{margin:0;padding:16px;border-bottom:1px solid var(--line);font-size:17px}
+  .cmp-table{width:100%;border-collapse:collapse;font-size:13px}
+  .cmp-table th,.cmp-table td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  .cmp-table th{color:var(--mut);font-weight:600;width:96px}
+  .cmp-name{font-weight:800}
+  .win{color:var(--green);font-weight:700}
+  .close{width:100%;background:var(--volt);color:#1a1300;border:none;padding:14px;font-weight:800;font-size:15px;cursor:pointer}
+  footer{text-align:center;color:var(--mut);font-size:12px;margin-top:22px}
+  footer b{color:var(--volt)}
+  .empty{text-align:center;color:var(--mut);padding:40px 0}
+
+  /* ============ CHAT UI CUSTOM CSS ============ */
+  .launch-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    height: 52px;
+    border-radius: 26px;
+    padding: 0 22px;
+    background: linear-gradient(135deg, var(--volt), var(--volt2));
+    color: #1a1300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 6px 22px rgba(255, 179, 0, 0.4);
+    z-index: 50;
+    font-size: 15px;
+    border: none;
+    font-weight: 800;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .launch-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 26px rgba(255, 179, 0, 0.5);
+  }
+  .chat-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 380px;
+    height: 560px;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.65);
+    z-index: 50;
+  }
+  .chat-container.open {
+    display: flex;
+  }
+  .chat-header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--mut);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  .chat-close-btn:hover {
+    background: var(--panel2);
+    color: var(--ink);
+  }
+  #log {
+    flex: 1;
+    padding: 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #11141a;
+  }
+  .msg {
+    display: flex;
+    margin-bottom: 2px;
+  }
+  .msg.me {
+    justify-content: flex-end;
+  }
+  .msg.bot {
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .bubble {
+    padding: 11px 15px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    max-width: 85%;
+    line-height: 1.45;
+    word-wrap: break-word;
+  }
+  .msg.me .bubble {
+    background: var(--volt);
+    color: #1a1300;
+    border-bottom-right-radius: 2px;
+    font-weight: 500;
+  }
+  .msg.bot .bubble {
+    background: var(--panel2);
+    color: var(--ink);
+    border-bottom-left-radius: 2px;
+  }
+  .msg.bot.typing .bubble {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 12px 18px;
+  }
+  .msg.bot.typing .bubble .d {
+    width: 6px;
+    height: 6px;
+    background: var(--mut);
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.4s infinite ease-in-out both;
+  }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+  .msg.bot.typing .bubble .d:nth-child(1) { animation-delay: -0.32s; }
+  .msg.bot.typing .bubble .d:nth-child(2) { animation-delay: -0.16s; }
+  .msg.bot.typing .bubble .d:nth-child(3) { animation-delay: -0.08s; }
+  
+  .chat-input-area {
+    display: flex;
+    border-top: 1px solid var(--line);
+    padding: 12px;
+    background: var(--panel);
+    gap: 8px;
+  }
+  .chat-input-area input {
+    flex: 1;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .chat-input-area input:focus {
+    border-color: var(--volt);
+  }
+  .chat-input-area button {
+    background: var(--volt);
+    border: none;
+    color: #1a1300;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 0 18px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .chat-input-area button:hover {
+    background: var(--volt2);
+  }
+  
+  /* Mini-cards inside chat */
+  .mini-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 6px;
+    width: 100%;
+    max-width: 290px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  }
+  .mc-top {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .mc-emoji {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--panel2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .mc-top b {
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .mc-sub {
+    font-size: 11px;
+    color: var(--mut);
+    margin-top: 1px;
+  }
+  .mc-deal {
+    background: rgba(255,214,10,.08);
+    border: 1px dashed rgba(255,214,10,.35);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    margin-top: 8px;
+    color: var(--volt);
+    font-weight: 500;
+  }
+  .mc-order {
+    display: block;
+    text-align: center;
+    background: var(--green);
+    color: #06231a;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+  }
+  .mc-order:hover {
+    opacity: 0.9;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>VOLT Finder</h1>
+        <p>Order direct — no Deliveroo, no fees</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="pitch">
+    <div class="big">🍔</div>
+    <div>
+      Find local restaurants &amp; <b>order direct</b> so they keep the full price.
+      <small>Delivery apps charge up to 30% — that cost lands on you. Direct = better deals.</small>
+    </div>
+  </div>
+
+  <div class="search">
+    <input id="q" type="text" placeholder="Search area, cuisine, or name… e.g. SW9 or Pizza">
+  </div>
+  <div class="row-label">Area</div>
+  <div class="chips" id="areaChips"></div>
+  <div class="row-label">Cuisine</div>
+  <div class="chips" id="cuisineChips"></div>
+
+  <div id="results"></div>
+
+  <footer>
+    Made with <b>VOLT</b> — supporting independent restaurants 🙌
+  </footer>
+</div>
+
+<!-- compare bar -->
+<div class="bar" id="bar">
+  <div class="bar-inner">
+    <div class="lbl"><span class="count" id="count">0</span> selected to compare</div>
+    <button class="clear" onclick="clearSel()">Clear</button>
+    <button class="go" onclick="openCompare()">Compare →</button>
+  </div>
+</div>
+
+<!-- compare modal -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeCompare()">
+  <div class="sheet">
+    <h2>📊 Side-by-side comparison</h2>
+    <div id="cmpBody"></div>
+    <button class="close" onclick="closeCompare()">Done</button>
+  </div>
+</div>
+
+<!-- FLOATING CHAT LAUNCH BUTTON -->
+<button class="launch-btn" id="launch" onclick="openChat()">💬 Ask Chatbot</button>
+
+<!-- CHAT WINDOW CONTAINER -->
+<div class="chat-container" id="chat">
+  <div class="chat-header">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div style="width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--volt),var(--volt2)); display:flex; align-items:center; justify-content:center; font-weight:bold; color:#1a1300; font-size:14px;">⚡</div>
+      <div>
+        <h4 style="margin:0; font-size:13px; color:var(--ink);">VOLT Assistant</h4>
+        <div style="font-size:10px; color:var(--mut);">AI-Powered Direct Order Guide</div>
+      </div>
+    </div>
+    <button class="chat-close-btn" onclick="closeChat()">✕</button>
+  </div>
+
+  <div id="log"></div>
+  
+  <div class="chat-input-area">
+    <input id="chatInput" type="text" placeholder="Ask about cuisines, postcodes (e.g. SW9)..." onkeydown="if(event.key==='Enter')ssend()">
+    <button onclick="ssend()">Send</button>
+  </div>
+</div>
+
+<script>
+const AV = {bg:["#3b2f2f","#2f3b32","#2f303b","#3b352f","#322f3b","#2f3b39","#3b2f32","#2f393b"]};
+const EMO = ["🍛","🍕","🥟","🍔","🍜","🍲","🌮","🥙"];
+const DATA = [
+  {name:"Spice Junction",cuisine:"Indian",area:"Brixton",postcode:"SW9",
+   deal:"20% off first direct order",delivery:2.49,min:12,rating:4.7,link:"https://spicejunction.example/order",i:0},
+  {name:"Nonna's Hearth",cuisine:"Italian / Pizza",area:"Clapham",postcode:"SW4",
+   deal:"Free garlic bread over £15",delivery:1.99,min:10,rating:4.8,link:"https://nonnashearth.example/order",i:1},
+  {name:"Bao & Beyond",cuisine:"Chinese / Taiwanese",area:"Shoreditch",postcode:"E1",
+   deal:"Buy 2 get 1 free on bao",delivery:2.99,min:15,rating:4.6,link:"https://baoandbeyond.example/order",i:2},
+  {name:"The Patty Republic",cuisine:"Burgers / American",area:"Brixton",postcode:"SW9",
+   deal:"£5 off orders over £20",delivery:1.49,min:10,rating:4.5,link:"https://pattyrepublic.example/order",i:3},
+  {name:"Green Leaf Thai",cuisine:"Thai",area:"Clapham",postcode:"SW4",
+   deal:"Free delivery this week",delivery:0,min:12,rating:4.7,link:"https://greenleafthai.example/order",i:4},
+  {name:"Seoul Bowl",cuisine:"Korean",area:"Shoreditch",postcode:"E1",
+   deal:"15% off + free drink",delivery:2.49,min:12,rating:4.6,link:"https://seoulbowl.example/order",i:5},
+  {name:"Rosa's Taqueria",cuisine:"Mexican",area:"Brixton",postcode:"SW9",
+   deal:"Taco Tuesday — 3 for £5",delivery:1.99,min:10,rating:4.4,link:"https://rosastaqueria.example/order",i:6},
+  {name:"Mezze Corner",cuisine:"Lebanese",area:"Camden",postcode:"NW1",
+   deal:"Free baklava over £18",delivery:2.99,min:14,rating:4.7,link:"https://mezze corner.example/order",i:7},
+];
+const sel = new Set();
+let fArea="All", fCuisine="All", q="";
+
+function uniq(arr){return [...new Set(arr)]}
+
+function renderChips(){
+  const areas=["All",...uniq(DATA.map(d=>d.area))];
+  const cuis=["All",...uniq(DATA.map(d=>d.cuisine))];
+  document.getElementById("areaChips").innerHTML=areas.map(a=>
+    `<div class="chip ${a===fArea?'active':''}" onclick="setArea('${a}')">${a}</div>`).join("");
+  document.getElementById("cuisineChips").innerHTML=cuis.map(c=>
+    `<div class="chip ${c===fCuisine?'active':''}" onclick="setCuisine('${c}')">${c}</div>`).join("");
+}
+function setArea(a){fArea=a;renderChips();render()}
+function setCuisine(c){fCuisine=c;renderChips();render()}
+
+function filtered(){
+  const Q=q.toLowerCase();
+  return DATA.filter(d=>
+    (fArea==="All"||d.area===fArea)&&
+    (fCuisine==="All"||d.cuisine===fCuisine)&&
+    (Q===""||[d.name,d.cuisine,d.area,d.postcode].join(" ").toLowerCase().includes(Q))
+  );
+}
+
+function card(d){
+  const on=sel.has(d.name);
+  return `<div class="card">
+    <div class="card-top">
+      <div class="avatar" style="background:${AV.bg[d.i]}">${EMO[d.i]}</div>
+      <div style="flex:1">
+        <h3>${d.name}</h3>
+        <div class="cuisine">${d.cuisine}</div>
+        <div class="meta">
+          <span class="dot">${d.area} · ${d.postcode}</span>
+          <span class="rate">★ ${d.rating}</span>
+        </div>
+      </div>
+    </div>
+    <div class="deal">${d.deal}</div>
+    <div class="price">Delivery <span>£${d.delivery.toFixed(2)}</span> · Min order <span>£${d.min}</span></div>
+    <div class="compare-row">
+      <a class="btn btn-order" href="${d.link}" target="_blank" rel="noopener">Order direct →</a>
+      <button class="btn-compare ${on?'sel':''}" onclick="toggle('${d.name}')">${on?'✓':'⚖'}</button>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const list=filtered();
+  document.getElementById("results").innerHTML = list.length
+    ? list.map(card).join("")
+    : `<div class="empty">😕 No matches. Try a different area or cuisine.</div>`;
+}
+
+function toggle(name){
+  if(sel.has(name)) sel.delete(name); else sel.add(name);
+  render(); updBar();
+}
+function clearSel(){sel.clear();render();updBar()}
+function updBar(){
+  const n=sel.size;
+  document.getElementById("bar").classList.toggle("show",n>0);
+  document.getElementById("count").textContent=n;
+}
+function openCompare(){
+  const items=DATA.filter(d=>sel.has(d.name));
+  if(!items.length) return;
+  const cheapestDelivery=Math.min(...items.map(d=>d.delivery));
+  const lowestMin=Math.min(...items.map(d=>d.min));
+  const bestRating=Math.max(...items.map(d=>d.rating));
+  const rows=(label,key,fn,winVal)=>`<tr><th>${label}</th>${
+    items.map(d=>{const v=fn(d);const win=(winVal!=null&&fn(d)===winVal);
+      return `<td${win?' class="win"':''}>${v}</td>`}).join("")}</tr>`;
+  const nameRow=`<tr><th>Restaurant</th>${
+    items.map(d=>`<td class="cmp-name">${d.name}</td>`).join("")}</tr>`;
+  document.getElementById("cmpBody").innerHTML=`<table class="cmp-table">${
+    nameRow}
+    ${rows("Cuisine","",d=>d.cuisine)}
+    ${rows("Area","",d=>`${d.area} ${d.postcode}`)}
+    ${rows("Rating","★",d=>"★ "+d.rating,bestRating)}
+    ${rows("Deal","",d=>d.deal)}
+    ${rows("Delivery","",d=>"£"+d.delivery.toFixed(2),cheapestDelivery)}
+    ${rows("Min order","",d=>"£"+d.min,lowestMin)}
+    ${rows("Order","",d=>`<a href="${d.link}" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">Order →</a>`)}
+    </table>`;
+  document.getElementById("modal").classList.add("show");
+}
+function closeCompare(){document.getElementById("modal").classList.remove("show")}
+
+document.getElementById("q").addEventListener("input",e=>{q=e.target.value;render()});
+renderChips();render();
+
+// ============ VOLT FINDER CHAT AGENT ============
+let greeted=false;
+
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function greetMsg(){return "👋 Welcome to VOLT Finder! I'm your AI assistant powered by NVIDIA MiniMax-M3. I'll help you find local restaurants near you so you can order direct and avoid delivery fees.\n\nWhat are you craving, or what's your London postcode?";}
+
+const log=document.getElementById("log");
+function pushMsg(sender,html){const m=document.createElement("div");m.className="msg "+sender;
+  m.innerHTML=`<div class="bubble">${html}</div>`;log.appendChild(m);log.scrollTop=log.scrollHeight;}
+function pushCard(d){const m=document.createElement("div");m.className="msg bot";
+  m.innerHTML=`<div class="mini-card"><div class="mc-top"><div class="mc-emoji">${EMO[d.i]}</div>
+    <div><b>${esc(d.name)}</b><div class="mc-sub">${esc(d.cuisine)} · ${esc(d.area)} · ★ ${d.rating}</div></div></div>
+    <div class="mc-deal">⭐ ${esc(d.deal)}</div>
+    <a class="mc-order" href="${d.link}" target="_blank" rel="noopener">Order direct →</a></div>`;
+  log.appendChild(m);log.scrollTop=log.scrollHeight;}
+function showTyping(){const t=document.createElement("div");t.className="msg bot typing";t.id="typing";
+  t.innerHTML='<div class="bubble"><span class="d"></span><span class="d"></span><span class="d"></span></div>';
+  log.appendChild(t);log.scrollTop=log.scrollHeight;}
+function hideTyping(){const t=document.getElementById("typing");if(t)t.remove();}
+
+// ============ NVIDIA MINIMAX-M3 CLIENT SIDE CODE ============
+const API_KEY = "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";
+
+async function callNvidiaAPI(userMessage) {
+  const systemInstruction = `You are the VOLT Finder AI Chat Agent, a friendly assistant that helps London locals find independent restaurants and order direct (avoiding high delivery app commissions like Deliveroo, which charge up to 30%).
+
+Here is your restaurant database:
+${JSON.stringify(DATA, null, 2)}
+
+Your primary instructions:
+1. Help users find restaurants by area (e.g., Brixton SW9, Clapham SW4, Shoreditch E1, Camden NW1), cuisine, or specific cravings.
+2. Recommend relevant restaurants from the database above. Keep your reasoning concise and warm.
+3. To display interactive restaurant cards in the user interface, you MUST append a JSON block at the absolute end of your response in this exact format:
+[CARDS_DATA: {"items": ["Restaurant Name 1", "Restaurant Name 2"]}]
+The names in the array must match the 'name' field in the database exactly.
+
+For example, if someone asks for a burger spot near Brixton, you might say:
+"You should check out The Patty Republic in Brixton (SW9)! They have a great 4.5 rating and a special direct-order deal: £5 off orders over £20.
+
+[CARDS_DATA: {"items": ["The Patty Republic"]}]"
+
+If no matching restaurant exists in the dataset, politely explain that we don't have partners in that area/cuisine yet, and suggest they try one of our active areas (Brixton, Clapham, Shoreditch, or Camden).`;
+
+  const targetUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+  const localProxyUrl = "/api/chat";
+  
+  // Use public CORS proxy on static sites, or direct when hosted safely.
+  const isLocalFile = window.location.protocol === "file:";
+  const isStaticHosted = window.location.hostname && !["localhost", "127.0.0.1"].includes(window.location.hostname);
+  
+  let url = localProxyUrl;
+  let headers = { "Content-Type": "application/json" };
+
+  if (isLocalFile || isStaticHosted) {
+    url = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+    headers["Authorization"] = `Bearer ${API_KEY}`;
+  }
+
+  const payload = JSON.stringify({
+    model: "minimaxai/minimax-m3",
+    messages: [
+      { role: "system", content: systemInstruction },
+      { role: "user", content: userMessage }
+    ],
+    max_tokens: 1024,
+    temperature: 0.7,
+    top_p: 0.95
+  });
+
+  try {
+    let response = await fetch(url, {
+      method: "POST",
+      headers: headers,
+      body: payload
+    });
+
+    if (!response.ok && url === localProxyUrl) {
+      console.warn("Local proxy failed, falling back to corsproxy.io...");
+      url = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+      headers["Authorization"] = `Bearer ${API_KEY}`;
+      response = await fetch(url, {
+        method: "POST",
+        headers: headers,
+        body: payload
+      });
+    }
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      const errMsg = err?.error?.message || `Status Code ${response.status}`;
+      return {
+        type: "text",
+        text: `❌ <b>API Connection Error:</b> ${errMsg}<br><br>Please verify your API key and network.`
+      };
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    let text = content;
+    let cardItems = [];
+    const match = content.match(/\[CARDS_DATA:\s*(\{.*?\})\]/);
+    if (match) {
+      text = content.replace(/\[CARDS_DATA:\s*(\{.*?\})\]/, "").trim();
+      try {
+        const parsed = JSON.parse(match[1]);
+        if (parsed && Array.isArray(parsed.items)) {
+          cardItems = DATA.filter(d => parsed.items.some(name => d.name.toLowerCase() === name.toLowerCase()));
+        }
+      } catch (e) {
+        console.error("Failed to parse cards JSON", e);
+      }
+    }
+
+    return {
+      type: cardItems.length ? "cards" : "text",
+      text: text,
+      items: cardItems
+    };
+  } catch (error) {
+    return {
+      type: "text",
+      text: `❌ <b>Network error:</b> ${error.message}<br><br>Ensure you have internet connection.`
+    };
+  }
+}
+
+async function handleSend(raw){
+  pushMsg("me", esc(raw));
+  showTyping();
+  
+  try {
+    const r = await callNvidiaAPI(raw);
+    hideTyping();
+    pushMsg("bot", r.text.replace(/\n/g, "<br>"));
+    if (r.type === "cards" && r.items) {
+      r.items.forEach(pushCard);
+      pushMsg("bot", 'Want to explore other spots? Send an area or cuisine anytime. 🙌');
+    }
+  } catch (e) {
+    hideTyping();
+    pushMsg("bot", "❌ An unexpected error occurred: " + esc(e.message));
+  }
+}
+
+function ssend(){const i=document.getElementById("chatInput");const v=i.value.trim();if(!v)return;i.value="";handleSend(v);}
+function qsend(v){handleSend(v);}
+function openChat(){
+  document.getElementById("chat").classList.add("open");
+  document.getElementById("launch").style.display="none";
+  if(!greeted){greeted=true;showTyping();setTimeout(()=>{hideTyping();pushMsg("bot",esc(greetMsg()).replace(/\n/g,"<br>"));},700);}
+  setTimeout(()=>document.getElementById("chatInput").focus(),350);
+}
+function closeChat(){
+  document.getElementById("chat").classList.remove("open");
+  document.getElementById("launch").style.display="flex";
+}
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0e33711cf8917d7',t:'MTc4MTg3OTI1Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
